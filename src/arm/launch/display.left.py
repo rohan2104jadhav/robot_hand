@@ -7,7 +7,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    pkg_path = get_package_share_directory("wujihand-urdf")
+    pkg_path = get_package_share_directory("arm")
     urdf_file = os.path.join(pkg_path, "urdf", "left.urdf")
 
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")

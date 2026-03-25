@@ -1,19 +1,16 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>wujihand-urdf</name>
-  <version>1.0.0</version>
-  <description>Wujihand description package containing URDF files and launch configurations</description>
-  
-  <maintainer email="support@wuji.tech">Wuji Technology</maintainer>
-  
-  <license>MIT</license>
-  
-  <author email="zihanqin2048@example.com">Zihan Qin</author>
-  
-  <url type="website">wuji.tech</url>
-  <url type="bugtracker">https://github.com/Wuji-Technology-Co-Ltd/wujihand-urdf/issues</url>
-  <url type="repository">https://github.com/Wuji-Technology-Co-Ltd/wujihand-urdf</url>
+  <name>arm</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="rohan2104jadhav@example.com">rohan</maintainer>
+  <license>TODO: License declaration</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
   
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
