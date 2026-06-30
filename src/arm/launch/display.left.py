@@ -23,6 +23,15 @@ def generate_launch_description():
         parameters=[{"use_sim_time": use_sim_time, "robot_description": robot_desc}],
     )
 
+
+    hand_operation_node = Node(
+        package="arm",
+        executable="hand_teleop_node",
+        name="hand_teleop_node",
+        output="screen",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
     joint_state_publisher_gui_node = Node(
         package="joint_state_publisher_gui",
         executable="joint_state_publisher_gui",
@@ -42,7 +51,8 @@ def generate_launch_description():
             DeclareLaunchArgument("use_sim_time", default_value="false"),
             DeclareLaunchArgument("gui", default_value="true"),
             robot_state_publisher_node,
-            joint_state_publisher_gui_node,
+            # joint_state_publisher_gui_node,
             rviz_node,
+            hand_operation_node,
         ]
     )

@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Float32MultiArray
+
+class HandTeleopNode(Node):
+    def __init__(self):
+        super().__init__('hand_teleop_node')
+        self.sub = self.create_subscription(Float32MultiArray, 'glove_data', self.callback, 10)
+        self.pub = self.create_publisher(JointState, 'joint_states', 10)
+        
+        self.alpha = 0.2 # Smoothing factor
+        
+        self.joint_names = [
+            'shoulder_pan_joint', 'shoulder_tilt_joint', 'elbow_flex_joint', 'elbow_rot_joint',
+            'wrist_flex_joint', 'wrist_abd_joint',
+            'finger1_joint1', 'finger1_joint2', 'finger1_joint3', 'finger1_joint4',
+            'finger2_joint1', 'finger2_joint2', 'finger2_joint3', 'finger2_joint4',
+            'finger3_joint1', 'finger3_joint2', 'finger3_joint3', 'finger3_joint4',
+            'finger4_joint1', 'finger4_joint2', 'finger4_joint3', 'finger4_joint4',
+            'finger5_joint1', 'finger5_joint2', 'finger5_joint3', 'finger5_joint4'
+        ]
+        self.prev_pos = [0.0] * len(self.joint_names)
+        self.get_logger().info("Glove Node: Inverted Logic Mode Active")
+
+    def callback(self, msg):
+        if len(msg.data) < 8: return
+
+        # --- INVERSION LOGIC ---
+        # If msg.data is 1.0 (Straight), we want flexion to be 0.0
+        # If msg.data is 0.0 (Bent), we want flexion to be 1.5
+        
+        def process_sensor(val):
+            # Invert: 1.0 becomes 0.0, 0.0 becomes 1.0
+            inverted_val = 1.0 - val
+            # Deadzone: If it's slightly bent (e.g. 0.05), force it to 0 (straight)
+            if inverted_val < 0.05: inverted_val = 0.0
+            return inverted_val
+
+        thumb  = process_sensor(msg.data[0])
+        index  = process_sensor(msg.data[1])
+        middle = process_sensor(msg.data[2])
+        ring   = process_sensor(msg.data[3])
+        pinky  = process_sensor(msg.data[4])
+        
+        roll, pitch, yaw = msg.data[5:8]
+
+        f_bend = 2.0 # Max radians for full curl
+
+        m = {}
+        # Arm Logic
+        m['shoulder_pan_joint'] = float(yaw)
+        m['shoulder_tilt_joint'] = -float(pitch) # Inverted for Up/Down correction
+        m['elbow_flex_joint'] = float(roll)
+        m['elbow_rot_joint'] = 0.0
+        m['wrist_flex_joint'] = 3.14 
+        m['wrist_abd_joint'] = 0.0
+
+        # Finger Mapping (Applying the inverted values)
+        # Thumb
+        m['finger1_joint1'] = thumb * f_bend
+        m['finger1_joint2'] = 0.0
+        m['finger1_joint3'] = thumb * f_bend
+        m['finger1_joint4'] = thumb * f_bend
+
+        # Index
+        m['finger2_joint1'] = index * f_bend
+        m['finger2_joint2'] = 0.0
+        m['finger2_joint3'] = index * f_bend
+        m['finger2_joint4'] = index * f_bend
+
+        # Middle
+        m['finger3_joint1'] = middle * f_bend
+        m['finger3_joint2'] = 0.0
+        m['finger3_joint3'] = middle * f_bend
+        m['finger3_joint4'] = middle * f_bend
+
+        # Ring
+        m['finger4_joint1'] = ring * f_bend
+        m['finger4_joint2'] = 0.0
+        m['finger4_joint3'] = ring * f_bend
+        m['finger4_joint4'] = ring * f_bend
+
+        # Pinky
+        m['finger5_joint1'] = pinky * f_bend
+        m['finger5_joint2'] = 0.0
+        m['finger5_joint3'] = pinky * f_bend
+        m['finger5_joint4'] = pinky * f_bend
+
+        # Prepare and Smooth positions
+        current_pos = [float(m[name]) for name in self.joint_names]
+        smoothed_pos = []
+        for i in range(len(current_pos)):
+            val = (self.alpha * current_pos[i]) + ((1.0 - self.alpha) * self.prev_pos[i])
+            smoothed_pos.append(val)
+        
+        self.prev_pos = smoothed_pos
+
+        # Publish JointState
+        js = JointState()
+        js.header.stamp = self.get_clock().now().to_msg()
+        js.name = self.joint_names
+        js.position = smoothed_pos
+        self.pub.publish(js)
+
+def main():
+    rclpy.init()
+    rclpy.spin(HandTeleopNode())
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

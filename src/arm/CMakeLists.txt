@@ -28,4 +28,12 @@ install(
     DESTINATION share/${PROJECT_NAME}
 )
 
+ament_python_install_package(scripts)
+
+install(
+  PROGRAMS
+  scripts/hand_teleop_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()
